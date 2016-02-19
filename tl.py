@@ -168,6 +168,8 @@ if __name__ == '__main__':
             if args.task[0] == '?':
                 show_help()
                 sys.exit(0)
+            elif args.task[0] == 'new':
+                log_activity('new', 'Arrived');
             elif args.task[0] in Categories:
                 (category, task) = select_tasks(args.task[0])
                 if category:
