@@ -4,16 +4,24 @@
 # * tl.py category <TAB>    - completes colon (:)
 # * tl.py category : <TAB>  - completes with tasks list in a given category
 
-TL=tl.py
+_TIMELOG=tl.py
+
+if which tl 2>&1 > /dev/null; then
+    _TIMELOG=tl
+else
+if which tl.py 2>&1 > /dev/null; then
+    _TIMELOG=tl.py
+fi
+fi
 
 _print_categories()
 {
-    $TL -c -r
+    $_TIMELOG -c -r
 }
 
 _print_tasks()
 {
-    $TL -r -t $1
+    $_TIMELOG -r -t $1
 }
 
 _timelog()
@@ -58,4 +66,4 @@ _timelog()
     esac
 }
 
-complete -F _timelog $TL
+complete -F _timelog $_TIMELOG
