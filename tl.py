@@ -40,6 +40,16 @@ Categories = {
 ListLimit = 10
 
 
+def import_file(import_file):
+    if not os.path.dirname(import_file):
+        import_file = os.curdir + '/' + import_file
+    if os.path.exists(import_file):
+        with open(import_file, 'rb') as infile:
+            with open(LogFile, 'wb') as outfile:
+                count = outfile.write(infile.read())
+        print("Imported %d bytes of data" % count)
+
+
 def create_logfile(newfile):
     if not os.path.exists(newfile):
         os.makedirs(os.path.dirname(newfile), exist_ok=True)
@@ -184,6 +194,8 @@ if __name__ == '__main__':
                         action='store_true')
     parser.add_argument('-l', '--logfile', nargs=1, metavar='LOGFILE',
                         help='Path to the gtimelog logfile to be use')
+    parser.add_argument('-i', '--importfile', nargs=1, metavar='IMPORTFILE',
+                        help='Path to a gtimelog file to import')
     args = parser.parse_args()
 
     if args.logfile is not None:
@@ -200,6 +212,10 @@ if __name__ == '__main__':
 
     if args.list_tasks:
         print_tasks(args.list_tasks[0], escape=args.raw)
+        sys.exit(0)
+
+    if args.importfile:
+        import_file(args.importfile[0])
         sys.exit(0)
 
     if args.task:
