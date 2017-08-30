@@ -7,7 +7,7 @@ from gtimelog.timelog import TimeWindow, format_duration_short, as_minutes
 
 gt_file = '%s/.local/share/gtimelog/timelog.txt' % expanduser("~")
 virtual_midnight = datetime.time(2, 0)
-userid = '<replace by your user identification>'
+userid = 'dgadomski'
 
 
 def get_time():
