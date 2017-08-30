@@ -14,7 +14,7 @@ def get_time():
     today = datetime.datetime.today()
     today = today.replace(hour=0, minute=0, second=0, microsecond=0)
     week_first = today - datetime.timedelta(days=today.weekday())
-    week_last = week_first + datetime.timedelta(days=6)
+    week_last = week_first + datetime.timedelta(days=4)
     week_last = week_last.replace(hour=23, minute=59, second=59)
     return (week_first, week_last)
 
