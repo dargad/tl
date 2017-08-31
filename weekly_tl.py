@@ -58,6 +58,28 @@ def lookahead(iterable):
     yield last, False
 
 
+def format_email(entries, categories):
+    mapping = {'L3 / L3 support ' : '# Cases',
+               'Launchpad & Public ' : '# LP',
+               'Meetings ' : '# Meetings',
+               'SEG related activities ' : '# Other'
+               }
+
+    print()
+    for cat in categories:
+        if cat in mapping:
+            header = mapping[cat]
+        else:
+            continue
+        print("%s" % header)
+        work = [(entry, duration)
+                for start, entry, duration in entries[cat]]
+        work.sort()
+        for (entry, duration), has_more in lookahead(work):
+            print("%s" % entry)
+        print()
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-l', '--logfile', nargs=1, metavar='LOGFILE',
@@ -69,6 +91,9 @@ def main():
                         action='store_true')
     parser.add_argument('-m', '--minutes',
                         help='Print weekly report with spent time in minutes',
+                        action='store_true')
+    parser.add_argument('-e', '--format-email',
+                        help='Format a status report e-mail',
                         action='store_true')
     args = parser.parse_args()
 
@@ -100,41 +125,46 @@ def main():
             totals['No category'] = t
         else:
             categories = sorted(entries)
-        for cat in categories:
-            print('%s:' % cat.strip())
 
-            work = [(entry, duration)
-                    for start, entry, duration in entries[cat]]
-            work.sort()
-            for (entry, duration), has_more in lookahead(work):
-                if not duration:
-                    continue  # skip empty "arrival" entries
+        if args.format_email:
+            format_email(entries, categories)
+        else:
 
-                entry = entry[:1].upper() + entry[1:]
+            for cat in categories:
+                print('%s:' % cat.strip())
+
+                work = [(entry, duration)
+                        for start, entry, duration in entries[cat]]
+                work.sort()
+                for (entry, duration), has_more in lookahead(work):
+                    if not duration:
+                        continue  # skip empty "arrival" entries
+
+                    entry = entry[:1].upper() + entry[1:]
+                    if args.no_time:
+                        print(u"%s" % entry)
+                    else:
+                        if args.minutes:
+                            print(u"%s %-61s  %+5s %+4s" %
+                                    (branch if has_more else branch_last,
+                                    entry, format_duration_short(duration),
+                                    as_minutes(duration)))
+                        else:
+                            print(u"%s %-61s  %+5s" %
+                                (branch if has_more else branch_last,
+                                entry, format_duration_short(duration)))
+
                 if args.no_time:
-                    print(u"%s" % entry)
+                    print("")
                 else:
                     if args.minutes:
-                        print(u"%s %-61s  %+5s %+4s" %
-                            (branch if has_more else branch_last,
-                            entry, format_duration_short(duration),
-                            as_minutes(duration)))
+                        print('-' * 75)
+                        print(u"%+72s %4s" % (format_duration_short(totals[cat]),
+                                            as_minutes(totals[cat])))
                     else:
-                        print(u"%s %-61s  %+5s" %
-                            (branch if has_more else branch_last,
-                            entry, format_duration_short(duration)))
-
-            if args.no_time:
-                print("")
-            else:
-                if args.minutes:
-                    print('-' * 75)
-                    print(u"%+72s %4s" % (format_duration_short(totals[cat]),
-                                        as_minutes(totals[cat])))
-                else:
-                    print('-' * 70)
-                    print(u"%+72s" % (format_duration_short(totals[cat])))
-        print("Total work done : %s" % format_duration_short(total_work))
+                        print('-' * 70)
+                        print(u"%+72s" % (format_duration_short(totals[cat])))
+            print("Total work done : %s" % format_duration_short(total_work))
 
 
 if __name__ == '__main__':
