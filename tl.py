@@ -11,10 +11,11 @@
 # option) any later version.  See http://www.gnu.org/copyleft/gpl.html for
 # the full text of the license.
 
-import argparse, re, sys, time
-from os.path import expanduser
-
-LogFile = '%s/.local/share/gtimelog/timelog.txt' % expanduser("~")
+import argparse
+import re
+import sys
+import time
+import os
 
 Categories = {
     'ua': 'L3 / L3 support',
@@ -37,6 +38,37 @@ Categories = {
     }
 
 ListLimit = 10
+
+
+def import_file(import_file):
+    if not os.path.dirname(import_file):
+        import_file = os.curdir + '/' + import_file
+    if os.path.exists(import_file):
+        with open(import_file, 'rb') as infile:
+            with open(LogFile, 'wb') as outfile:
+                count = outfile.write(infile.read())
+        print("Imported %d bytes of data" % count)
+
+
+def create_logfile(newfile):
+    if not os.path.exists(newfile):
+        os.makedirs(os.path.dirname(newfile), exist_ok=True)
+        with open(newfile, 'w') as newfile:
+            newfile.write('')
+
+
+def set_logfile(argfile=None):
+    if argfile is not None:
+        logfile = argfile[0]
+    else:
+        env = os.environ.get("GTIMELOG_FILE")
+        if env is not None and env is not '':
+            logfile = env
+        else:
+            home = os.path.expanduser("~")
+            logfile = '%s/.local/share/gtimelog/timelog.txt' % home
+    create_logfile(logfile)
+    return logfile
 
 
 def print_categories():
@@ -146,7 +178,9 @@ def log_activity(category, task=None):
                     today, category, task))
     return 0
 
+
 if __name__ == '__main__':
+
     parser = argparse.ArgumentParser()
     parser.add_argument('task', nargs='*',
                         help='category | category : task title')
@@ -158,7 +192,16 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--raw',
                         help='produce raw output (without pretty formatting)',
                         action='store_true')
+    parser.add_argument('-l', '--logfile', nargs=1, metavar='LOGFILE',
+                        help='Path to the gtimelog logfile to be use')
+    parser.add_argument('-i', '--importfile', nargs=1, metavar='IMPORTFILE',
+                        help='Path to a gtimelog file to import')
     args = parser.parse_args()
+
+    if args.logfile is not None:
+        LogFile = set_logfile(args.logfile)
+    else:
+        LogFile = set_logfile()
 
     if args.list_categories:
         if args.raw:
@@ -169,6 +212,10 @@ if __name__ == '__main__':
 
     if args.list_tasks:
         print_tasks(args.list_tasks[0], escape=args.raw)
+        sys.exit(0)
+
+    if args.importfile:
+        import_file(args.importfile[0])
         sys.exit(0)
 
     if args.task:

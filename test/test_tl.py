@@ -1,17 +1,22 @@
-import unittest, subprocess, sys, tempfile, os, shutil
+import unittest
+import sys
+import tempfile
+import os
+import shutil
 from mock import patch
 import tl
 
 
 class TlTest(unittest.TestCase):
     @classmethod
-    def setUpClass(letest):
-        letest.workdir = tempfile.mkdtemp()
-        tl.LogFile = os.path.join(letest.workdir, 'timelog.txt')
+    def setUpClass(self):
+        self.workdir = tempfile.mkdtemp()
+        self.LogFile = os.path.join(self.workdir, 'timelog.txt')
         # Prepare timelog file with existing tasks
-        with open(tl.LogFile, 'w') as timelog:
+        with open(self.LogFile, 'w') as timelog:
             timelog.write("2015-03-13 13:21: lunch** :\n")
-            timelog.write("2015-03-13 16:34: Launchpad & Public :  lp1415880\n")
+            timelog.write("2015-03-13 16:34: Launchpad & Public :  lp1415880\n"
+                          )
             timelog.write("2015-03-13 17:45: L3 / L3 support :  SF7-openafs\n")
             timelog.write("2015-03-16 08:41: arrived\n")
             timelog.write("2015-03-16 09:57: Personal management :  email\n")
@@ -21,7 +26,8 @@ class TlTest(unittest.TestCase):
                           "python\n"))
             timelog.write(("2015-03-17 11:02: Mentoring / Edu / Training :  "
                           "ruby\n"))
-            timelog.write("2015-03-17 11:03: Mentoring / Edu / Training :  c\n")
+            timelog.write("2015-03-17 11:03: Mentoring / Edu / Training :  c\n"
+                          )
             timelog.write(("2015-03-17 11:04: Mentoring / Edu / Training :  "
                           "apl\n"))
             timelog.write(("2015-03-17 11:05: Mentoring / Edu / Training :  "
@@ -53,7 +59,8 @@ class TlTest(unittest.TestCase):
             timelog.write("2015-03-19 11:12: Launchpad & Public : supp\n")
             timelog.write("2015-03-19 11:13: Launchpad & Public : team\n")
             timelog.write("2015-03-19 11:14: Launchpad & Public : mgr\n")
-            timelog.write("2015-03-19 11:15: Launchpad & Public : foundation\n")
+            timelog.write("2015-03-19 11:15: Launchpad & Public : foundation\n"
+                          )
             timelog.write("2015-03-19 11:16: Launchpad & Public : server\n")
             timelog.write("2015-03-19 11:17: Launchpad & Public : sabdfl\n")
             timelog.write("2015-03-19 11:18: Launchpad & Public : kernel\n")
@@ -72,29 +79,92 @@ class TlTest(unittest.TestCase):
             timelog.write("2015-03-19 11:31: Launchpad & Public : what\n")
 
     @classmethod
-    def tearDownClass(letest):
-        shutil.rmtree(letest.workdir)
+    def tearDownClass(self):
+        shutil.rmtree(self.workdir)
 
-    def test_new(self):
+    def test_create_logfile(self):
+        '''
+        Test new logfile creation
+        '''
+        newlogfile = os.path.join(self.workdir, 'newtimelog.txt')
+        self.assertFalse(os.path.exists(newlogfile),
+                         '%s already exists' % newlogfile)
+        argfile = [newlogfile]
+        tl.set_logfile(argfile)
+        self.assertTrue(os.path.exists(newlogfile),
+                        '%s not created' % newlogfile)
+
+    def test_create_logfile_no_dir(self):
+        '''
+        Test new logfile creation in inexistant directory
+        '''
+        newlogfile = os.path.join(self.workdir, 'a/b', 'newtimelog.txt')
+        self.assertFalse(os.path.exists(newlogfile),
+                         '%s already exists' % newlogfile)
+        argfile = [newlogfile]
+        tl.set_logfile(argfile)
+        self.assertTrue(os.path.exists(newlogfile),
+                        '%s not created' % newlogfile)
+    def test_create_logfile_dir_exists(self):
+        '''
+        Test new logfile creation in directory that already exists
+        '''
+        newlogfile = os.path.join(self.workdir, 'c/d', 'newtimelog.txt')
+        self.assertFalse(os.path.exists(newlogfile),
+                         '%s already exists' % newlogfile)
+        os.mkdir(self.workdir+'/c')
+        argfile = [newlogfile]
+        tl.set_logfile(argfile)
+        self.assertTrue(os.path.exists(newlogfile),
+                        '%s not created' % newlogfile)
+
+    def test_new_entry(self):
         '''testing only 'new' argument'''
+        tl.LogFile = self.LogFile
         tl.log_activity('new', 'Arrived')
         line = self._get_last_log_line().strip()
         self.assertTrue(line.endswith('Arrived'))
 
+    def test_logfile_with_arg(self):
+        '''testing logfile definition with --logfile argument'''
+        argfile = [self.LogFile]
+        logfile = tl.set_logfile(argfile)
+        self.assertTrue(logfile, self.LogFile)
+
+    def test_logfile_with_empty_env_variable(self):
+        '''testing logfile definition with empty GTIMELOG_FILE env variable'''
+        os.environ.setdefault('GTIMELOG_FILE', '')
+        with patch('os.path.expanduser', return_value=self.workdir):
+            with patch('os.path.exists', return_value=True):
+                logfile = tl.set_logfile()
+        default_target = '%s/.local/share/gtimelog/timelog.txt' % self.workdir
+        self.assertEquals(logfile, default_target)
+        os.environ.pop('GTIMELOG_FILE')
+
+    def test_logfile_with_env_variable(self):
+        '''testing logfile definition with GTIMELOG_FILE env variable'''
+        os.environ.setdefault('GTIMELOG_FILE', '%s' % self.LogFile)
+        logfile = tl.set_logfile()
+        self.assertEquals(logfile, self.LogFile)
+        os.environ.pop('GTIMELOG_FILE')
+
     def test_ua_entry(self):
         '''testing a UA entry'''
+        tl.LogFile = self.LogFile
         tl.log_activity('ua', 'This is one entry')
         line = self._get_last_log_line().strip()
         self.assertTrue(line.endswith('L3 / L3 support : This is one entry'))
 
     def test_not_logged(self):
         '''testing argument with two asterix'''
+        tl.LogFile = self.LogFile
         tl.log_activity('lunch**')
         line = self._get_last_log_line().strip()
         self.assertTrue(line.endswith('lunch**'))
 
     def test_absolutely_not_logged(self):
         '''testing argument with three asterix'''
+        tl.LogFile = self.LogFile
         tl.log_activity('lunch***')
         line = self._get_last_log_line().strip()
         self.assertTrue(line.endswith('lunch***'))
@@ -340,8 +410,27 @@ c
 ruby
 python""")
 
+    def test_logfile_default(self):
+        with patch('os.path.expanduser', return_value=self.workdir):
+            with patch('tl.create_logfile', return_value=self.LogFile):
+                Log = tl.set_logfile()
+                self.assertEqual(Log, '%s/.local/share/gtimelog/timelog.txt'
+                                 % self.workdir)
+
+    def test_logfile_arg(self):
+        argline = ['%s/mylog' % self.workdir]
+        Log = tl.set_logfile(argline)
+        self.assertEqual(Log, '%s/mylog' % self.workdir)
+
+    def test_logfile_env_variable(self):
+        with patch('os.environ.get',
+                   return_value='%s/mylogenv' % self.workdir):
+            Log = tl.set_logfile()
+            self.assertEqual(Log, '%s/mylogenv' % self.workdir)
+
     def _get_last_log_line(self):
-        with open(tl.LogFile, 'r') as timelog:
+
+        with open(self.LogFile, 'r') as timelog:
             for line in timelog:
                 continue
         return(line)

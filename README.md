@@ -6,32 +6,74 @@ This is just a simple script that I did more or less as a
 python assignment to help me keep track of my work under
 gtimelog.
 
+## Scripts
+
+* tl.py        : Main script to register tasks
+* weekly_tl.py : Weekly report
+* rep_tl.py    : Category report
+* tl_sum.py    : Summary report for a single task
+
 ## Syntax
 
-### Help
-    $ ./tl.py ?
-    Categories :['know', 'meet', 'pers', 'skill', 'team', 'ua', 'ubu', 'up']
+### tl.py
 
-* comm: Community Involvment
-* ua: L3 / L3 support
-* up: Upstream
-* ubu: Upstream Ubuntu
-* meet: Internal meetings
-* pers: Personal management
-* skill: Skills building
-* know: Knowledge transfer
-* team: Team support
+This is the main script responsible for logging the time into the gtimelog
+logfile.
 
-### New category & task
-    $ ./tl.py category : task
+    usage: tl.py [-h] [-c] [-t CATEGORY] [-r] [-l LOGFILE] [task [task ...]]
 
-### Use existing category
-    $ tl ubu
-    1) PlusOne - Fix deja-dup ftbs
-    2) kdump-tools with runlevel_s
-    3) lp1415880 - bcmwl-kernel source
-    4) sosreport juju plugin enhancement
-    Select task (0 to exit): 
+    positional arguments:
+      task                  category | category : task title
 
-The list is limited to 10 items, listed in reverse. Hit <CR> to continue
-to scroll the list for more entries
+    optional arguments:
+      -h, --help            show this help message and exit
+      -c, --list-categories
+                            list available task categories
+      -t CATEGORY, --list-tasks CATEGORY
+                            list available tasks for a given category
+      -r, --raw             produce raw output (without pretty formatting)
+      -l LOGFILE, --logfile LOGFILE
+                            Path to the gtimelog logfile to be use
+
+### weekly_tl.py
+
+This script provides a weekly summary of all the work done.
+
+    usage: weekly_tl.py [-h] [-l LOGFILE] [-u USER] [-n] [-m]
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -l LOGFILE, --logfile LOGFILE
+                            Path to the gtimelog logfile to be use
+      -u USER, --user USER  User Identification to be used for report
+      -n, --no-time         Print weekly report without spent time
+      -m, --minutes         Print weekly report with spent time in minutes
+
+### rep_tl.py
+
+This script will list a summary of the different tasks done, time spent on it
+and percentage of the total time spent.
+
+    usage: rep_tl.py [-h] [-l LOGFILE]
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -l LOGFILE, --logfile LOGFILE
+                        Path to the gtimelog logfile to be use
+
+### tl_sum.py
+
+This calculates the total time spent on a task.
+
+    usage: tl_sum.py [-h] [-c] [-t CATEGORY] [-r] [task [task ...]]
+
+    positional arguments:
+      task                  category | category : task title
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -c, --list-categories
+                            list available task categories
+      -t CATEGORY, --list-tasks CATEGORY
+                            list available tasks for a given category
+      -r, --raw             produce raw output (without pretty formatting)
