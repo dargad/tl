@@ -6,8 +6,6 @@ import os
 from gtimelog.timelog import TimeWindow, format_duration_short, as_minutes
 from os.path import expanduser
 
-branch = '├──'
-branch_last = '└──'
 gt_file = '%s/.local/share/gtimelog/timelog.txt' % expanduser("~")
 virtual_midnight = datetime.time(2, 0)
 
@@ -58,26 +56,87 @@ def lookahead(iterable):
     yield last, False
 
 
-def format_email(entries, categories):
-    mapping = {'L3 / L3 support ' : '# Cases',
-               'Launchpad & Public ' : '# LP',
-               'Meetings ' : '# Meetings',
-               'SEG related activities ' : '# Other'
-               }
+class BaseFormatter(object):
+    def format_cat_separator(self):
+        print()
 
-    print()
-    for cat in categories:
+    def format(self, entries, totals):
+        self._entries = entries
+        self._totals = totals
+
+        if self._entries:
+            if None in entries:
+                self._categories = sorted(entries)
+                self._categories.append('No category')
+                # self._entries['No category'] = e
+                t = totals.pop(None)
+                totals['No category'] = t
+            else:
+                self._categories = sorted(entries)
+
+        for cat in self._categories:
+            if not self.format_category(cat):
+                continue
+
+            work = [(entry, duration)
+                    for start, entry, duration in self._entries[cat]]
+            work.sort()
+            for (entry, duration), has_more in lookahead(work):
+                if not duration:
+                    continue  # skip empty "arrival" entries
+
+                self.format_entry(entry, duration, has_more)
+
+            self.format_cat_separator()
+
+
+class PrettyFormatter(BaseFormatter):
+    BRANCH = '├──'
+    BRANCH_LAST = '└──'
+
+    def __init__(self, show_time=True, show_minutes=False):
+        self._show_time = show_time
+        self._show_minutes = show_minutes
+
+    def format_category(self, cat):
+        print('%s:' % cat.strip())
+        return True
+
+    def format_entry(self, entry, duration, has_more):
+        if self._show_time:
+            if self._show_minutes:
+                print(u"%s %-61s  %+5s %+4s" %
+                    (PrettyFormatter.BRANCH if has_more else
+                    PrettyFormatter.BRANCH_LAST,
+                    entry, format_duration_short(duration),
+                    as_minutes(duration)))
+            else:
+                print(u"%s %-61s  %+5s" %
+                      (PrettyFormatter.BRANCH if has_more else
+                       PrettyFormatter.BRANCH_LAST,
+                       entry, format_duration_short(duration)))
+        else:
+            print(u"%s %-61s  %+5s" %
+                  (PrettyFormatter.BRANCH if has_more else
+                   PrettyFormatter.BRANCH_LAST,
+                   entry, format_duration_short(duration)))
+
+
+class EmailFormatter(BaseFormatter):
+    def format_category(self, cat):
+        mapping = {'L3 / L3 support ' : '# Cases',
+                'Launchpad & Public ' : '# LP',
+                'Meetings ' : '# Meetings',
+                'SEG related activities ' : '# Other'
+                }
         if cat in mapping:
             header = mapping[cat]
-        else:
-            continue
-        print("%s" % header)
-        work = [(entry, duration)
-                for start, entry, duration in entries[cat]]
-        work.sort()
-        for (entry, duration), has_more in lookahead(work):
-            print("%s" % entry)
-        print()
+            print("%s" % header)
+            return True
+        return False
+
+    def format_entry(self, entry, duration, has_more):
+        print("%s" % entry)
 
 
 def main():
@@ -95,6 +154,10 @@ def main():
     parser.add_argument('-e', '--format-email',
                         help='Format a status report e-mail',
                         action='store_true')
+    parser.add_argument('-f', '--from',
+                        help='Select the start date of the period to display')
+    parser.add_argument('-t', '--to',
+                        help='Select the end date of the period to display')
     args = parser.parse_args()
 
     if args.logfile is not None:
@@ -112,59 +175,21 @@ def main():
     total_work, _ = log_entries.totals()
     entries, totals = log_entries.categorized_work_entries()
 
+    formatter = None
+
+    if args.format_email:
+        formatter = EmailFormatter()
+    else:
+        formatter = PrettyFormatter(not args.no_time, args.minutes)
+
     print("[ACTIVITY] %s to %s (%s)" %
           (week_first.isoformat().split("T")[0],
            week_last.isoformat().split("T")[0],
            UserId))
-    if entries:
-        if None in entries:
-            categories = sorted(entries)
-            categories.append('No category')
-            entries['No category'] = e
-            t = totals.pop(None)
-            totals['No category'] = t
-        else:
-            categories = sorted(entries)
 
-        if args.format_email:
-            format_email(entries, categories)
-        else:
-
-            for cat in categories:
-                print('%s:' % cat.strip())
-
-                work = [(entry, duration)
-                        for start, entry, duration in entries[cat]]
-                work.sort()
-                for (entry, duration), has_more in lookahead(work):
-                    if not duration:
-                        continue  # skip empty "arrival" entries
-
-                    entry = entry[:1].upper() + entry[1:]
-                    if args.no_time:
-                        print(u"%s" % entry)
-                    else:
-                        if args.minutes:
-                            print(u"%s %-61s  %+5s %+4s" %
-                                    (branch if has_more else branch_last,
-                                    entry, format_duration_short(duration),
-                                    as_minutes(duration)))
-                        else:
-                            print(u"%s %-61s  %+5s" %
-                                (branch if has_more else branch_last,
-                                entry, format_duration_short(duration)))
-
-                if args.no_time:
-                    print("")
-                else:
-                    if args.minutes:
-                        print('-' * 75)
-                        print(u"%+72s %4s" % (format_duration_short(totals[cat]),
-                                            as_minutes(totals[cat])))
-                    else:
-                        print('-' * 70)
-                        print(u"%+72s" % (format_duration_short(totals[cat])))
-            print("Total work done : %s" % format_duration_short(total_work))
+    if formatter:
+        formatter.format(entries, totals)
+    print("Total work done : %s" % format_duration_short(total_work))
 
 
 if __name__ == '__main__':
