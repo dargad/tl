@@ -30,6 +30,11 @@ def set_userid(user=None):
     return '<replace by your user identification>'
 
 
+def parse_date(datestr):
+    from dateutil.parser import parse
+    return parse(datestr)
+
+
 def get_time():
     today = datetime.datetime.today()
     today = today.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -73,6 +78,8 @@ class BaseFormatter(object):
                 totals['No category'] = t
             else:
                 self._categories = sorted(entries)
+        else:
+            return None
 
         for cat in self._categories:
             if not self.format_category(cat):
@@ -154,9 +161,9 @@ def main():
     parser.add_argument('-e', '--format-email',
                         help='Format a status report e-mail',
                         action='store_true')
-    parser.add_argument('-f', '--from',
+    parser.add_argument('-f', '--from-date',
                         help='Select the start date of the period to display')
-    parser.add_argument('-t', '--to',
+    parser.add_argument('-t', '--to-date',
                         help='Select the end date of the period to display')
     args = parser.parse_args()
 
@@ -171,6 +178,15 @@ def main():
         UserId = set_userid()
 
     (week_first, week_last) = get_time()
+    if args.from_date:
+        week_first = parse_date(args.from_date)
+    if args.to_date:
+        week_last = parse_date(args.to_date)
+    if week_first > week_last:
+        print("Starting date should be less than the ending date.")
+        parser.print_usage()
+        raise SystemExit
+
     log_entries = TimeWindow(LogFile, week_first, week_last, virtual_midnight)
     total_work, _ = log_entries.totals()
     entries, totals = log_entries.categorized_work_entries()
