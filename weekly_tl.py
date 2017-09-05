@@ -85,6 +85,9 @@ class BaseFormatter(object):
             return None
 
         for cat in self._categories:
+            # skip empty categories
+            if not self._totals[cat]:
+                continue
             if not self.format_category(cat):
                 continue
 
