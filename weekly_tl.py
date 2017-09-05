@@ -65,6 +65,9 @@ class BaseFormatter(object):
     def format_cat_separator(self):
         print()
 
+    def format_cat_summary(self, cat):
+        pass
+
     def format(self, entries, totals):
         self._entries = entries
         self._totals = totals
@@ -95,6 +98,7 @@ class BaseFormatter(object):
                 self.format_entry(entry, duration, has_more)
 
             self.format_cat_separator()
+            self.format_cat_summary(cat)
 
 
 class PrettyFormatter(BaseFormatter):
@@ -104,6 +108,12 @@ class PrettyFormatter(BaseFormatter):
     def __init__(self, show_time=True, show_minutes=False):
         self._show_time = show_time
         self._show_minutes = show_minutes
+
+    def format_cat_summary(self, cat):
+        print(u"%+72s" % format_duration_short(self._totals[cat]))
+
+    def format_cat_separator(self):
+        print(72*'-')
 
     def format_category(self, cat):
         print('%s:' % cat.strip())
