@@ -113,7 +113,12 @@ class PrettyFormatter(BaseFormatter):
         self._show_minutes = show_minutes
 
     def format_cat_summary(self, cat):
-        print(u"%+72s" % format_duration_short(self._totals[cat]))
+        if self._show_time:
+            if self._show_minutes:
+                print(u"%+72s %+4s" % (format_duration_short(self._totals[cat]),
+                    as_minutes(self._totals[cat])))
+            else:
+                print(u"%+72s" % format_duration_short(self._totals[cat]))
 
     def format_cat_separator(self):
         print(72*'-')
@@ -128,20 +133,19 @@ class PrettyFormatter(BaseFormatter):
         if self._show_time:
             if self._show_minutes:
                 print(u"%s %-62s %+5s %+4s" %
-                    (PrettyFormatter.BRANCH if has_more else
-                    PrettyFormatter.BRANCH_LAST,
-                    entry, format_duration_short(duration),
-                    as_minutes(duration)))
+                      (PrettyFormatter.BRANCH if has_more else
+                       PrettyFormatter.BRANCH_LAST,
+                       entry, format_duration_short(duration),
+                       as_minutes(duration)))
             else:
                 print(u"%s %-62s %+5s" %
                       (PrettyFormatter.BRANCH if has_more else
                        PrettyFormatter.BRANCH_LAST,
                        entry, format_duration_short(duration)))
         else:
-            print(u"%s %-62s %+5s" %
+            print(u"%s %-62s" %
                   (PrettyFormatter.BRANCH if has_more else
-                   PrettyFormatter.BRANCH_LAST,
-                   entry, format_duration_short(duration)))
+                   PrettyFormatter.BRANCH_LAST, entry))
 
 
 class EmailFormatter(BaseFormatter):
