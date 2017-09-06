@@ -116,7 +116,7 @@ class PrettyFormatter(BaseFormatter):
         if self._show_time:
             if self._show_minutes:
                 print(u"%+72s %+4s" % (format_duration_short(self._totals[cat]),
-                    as_minutes(self._totals[cat])))
+                      as_minutes(self._totals[cat])))
             else:
                 print(u"%+72s" % format_duration_short(self._totals[cat]))
 
@@ -150,11 +150,10 @@ class PrettyFormatter(BaseFormatter):
 
 class EmailFormatter(BaseFormatter):
     def format_category(self, cat):
-        mapping = {'L3 / L3 support ' : '# Cases',
-                'Launchpad & Public ' : '# LP',
-                'Meetings ' : '# Meetings',
-                'SEG related activities ' : '# Other'
-                }
+        mapping = {'L3 / L3 support ': '# Cases',
+                   'Launchpad & Public ': '# LP',
+                   'Meetings ': '# Meetings',
+                   'SEG related activities ': '# Other'}
         if cat in mapping:
             header = mapping[cat]
             print("%s" % header)
