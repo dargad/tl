@@ -123,20 +123,22 @@ class PrettyFormatter(BaseFormatter):
         return True
 
     def format_entry(self, entry, duration, has_more):
+        if len(entry) >= 60:
+            entry = entry[:58] + ' (…)'
         if self._show_time:
             if self._show_minutes:
-                print(u"%s %-61s  %+5s %+4s" %
+                print(u"%s %-62s %+5s %+4s" %
                     (PrettyFormatter.BRANCH if has_more else
                     PrettyFormatter.BRANCH_LAST,
                     entry, format_duration_short(duration),
                     as_minutes(duration)))
             else:
-                print(u"%s %-61s  %+5s" %
+                print(u"%s %-62s %+5s" %
                       (PrettyFormatter.BRANCH if has_more else
                        PrettyFormatter.BRANCH_LAST,
                        entry, format_duration_short(duration)))
         else:
-            print(u"%s %-61s  %+5s" %
+            print(u"%s %-62s %+5s" %
                   (PrettyFormatter.BRANCH if has_more else
                    PrettyFormatter.BRANCH_LAST,
                    entry, format_duration_short(duration)))
