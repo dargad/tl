@@ -80,6 +80,7 @@ def print_tasks(category, **kwargs):
     tasks = get_tasks(category)
     if "escape" in kwargs and kwargs["escape"]:
         new_tasks = [t.replace(" ", "\\ ") for t in tasks]
+        new_tasks = ["'" + t + "'" for t in tasks]
         tasks = new_tasks
     print("\n".join(tasks))
 

@@ -46,21 +46,29 @@ _timelog()
         --list-categories)
             COMPREPLY=( $(compgen -W "-r" -- ${curr}) )
             ;;
-        :)
-            local category="${COMP_WORDS[COMP_CWORD-2]}"
-            local tasks=$(_print_tasks $category)
-            tasks="${tasks//\\ /___}"
-            for iter in ${tasks}; do
-                if [[ $iter =~ ^$curr ]]; then
-                    COMPREPLY+=( "${iter//___/ }" )
-                fi
-            done
-            ;;
         *)
             if [[ "${categories}" = *"${prev}"* ]]; then
                 COMPREPLY=( $(compgen -W ":" -- ${curr}) )
                 return 0
             fi
+
+            local category="${COMP_WORDS[1]}"
+            local all="${COMP_WORDS[@]}"
+            local sep=$(expr index "$all" :)
+            if [ $sep -gt 0 ]
+            then
+                local tasks=$(_print_tasks $category)
+                tasks="${tasks//\\ /___}"
+                local curr_task=${all:$(( sep+1 ))}
+                local curr_task_repl=${curr_task// /___}
+                for iter in ${tasks}; do
+                    if [[ $iter =~ ^$curr_task_repl ]]; then
+                        COMPREPLY+=( "${iter//___/ }" )
+                    fi
+                done
+                [[ ! -z "$COMPREPLY" ]] && return 0
+            fi
+
             COMPREPLY=( $(compgen -W "${categories} ${opts}" -- ${curr}) )
             ;;
     esac
