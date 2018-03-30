@@ -3,7 +3,7 @@
 import datetime
 import argparse
 import os
-from gtimelog.timelog import TimeWindow, format_duration_short, as_minutes
+from gtimelog.timelog import TimeLog, format_duration_short, as_minutes
 from os.path import expanduser
 
 gt_file = '%s/.local/share/gtimelog/timelog.txt' % expanduser("~")
@@ -205,7 +205,8 @@ def main():
         parser.print_usage()
         raise SystemExit
 
-    log_entries = TimeWindow(LogFile, week_first, week_last, virtual_midnight)
+    log = TimeLog(LogFile, virtual_midnight)
+    log_entries = log.window_for(week_first, week_last)
     total_work, _ = log_entries.totals()
     entries, totals = log_entries.categorized_work_entries()
 

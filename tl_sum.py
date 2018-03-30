@@ -16,7 +16,7 @@ import re
 import sys
 import datetime
 from os.path import expanduser
-from gtimelog.timelog import TimeWindow
+from gtimelog.timelog import TimeLog
 virtual_midnight = datetime.time(2, 0)
 
 LogFile = '%s/.local/share/gtimelog/timelog.txt' % expanduser("~")
@@ -89,6 +89,7 @@ def get_tasks(category):
 
 
 def select_tasks(category):
+    print("select_tasks")
     cases = get_tasks(category)
     mytask = 0
     for I in cases:
@@ -137,7 +138,8 @@ def task_summary(category, task=None):
     total_delta = datetime.timedelta()
     today = datetime.datetime.today()
     epoch = datetime.datetime(1970, 10, 1)
-    log_entries = TimeWindow(LogFile, epoch, today, virtual_midnight)
+    log = TimeLog(LogFile, virtual_midnight)
+    log_entries = log.window_for(epoch, today)
     entries, _ = log_entries.categorized_work_entries()
 
     for (_, entry, entry_time) in entries[Categories[category] + ' ']:
@@ -173,6 +175,7 @@ if __name__ == '__main__':
         print_tasks(args.list_tasks[0], escape=args.raw)
         sys.exit(0)
 
+    print("args.task: %s" % args.task)
     if args.task:
         if len(args.task) == 1:
             if args.task[0] == '?':
