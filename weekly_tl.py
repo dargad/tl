@@ -206,7 +206,7 @@ def main():
         raise SystemExit
 
     log = TimeLog(LogFile, virtual_midnight)
-    log_entries = log.window_for(week_first, week_last)
+    log_entries = log.window_for(week_first, week_last + datetime.timedelta(1))
     total_work, _ = log_entries.totals()
     entries, totals = log_entries.categorized_work_entries()
 
