@@ -103,6 +103,39 @@ class BaseFormatter(object):
             self.format_cat_separator()
             self.format_cat_summary(cat)
 
+class SimpleFormatter(BaseFormatter):
+    def __init__(self, show_time=True, show_minutes=False):
+        self._show_time = show_time
+        self._show_minutes = show_minutes
+
+    def format_cat_summary(self, cat):
+        if self._show_time:
+            if self._show_minutes:
+                print(u"%+78s %+4s" % (format_duration_short(self._totals[cat]),
+                      as_minutes(self._totals[cat])))
+            else:
+                print(u"%+78s" % format_duration_short(self._totals[cat]))
+
+    def format_cat_separator(self):
+        print(72*'-')
+
+    def format_category(self, cat):
+        print('%s:' % cat.strip())
+        return True
+
+    def format_entry(self, entry, duration, has_more):
+        if len(entry) >= 60:
+            entry = entry[:58] + ' (…)'
+        if self._show_time:
+            if self._show_minutes:
+                print(u"%-72s %+5s %+4s" %
+                      (entry, format_duration_short(duration),
+                       as_minutes(duration)))
+            else:
+                print(u"%-72s %+5s" %
+                      (entry, format_duration_short(duration)))
+        else:
+            print(u"%-72s" % (entry))
 
 class PrettyFormatter(BaseFormatter):
     BRANCH = '├──'
@@ -176,9 +209,13 @@ def main():
     parser.add_argument('-m', '--minutes',
                         help='Print weekly report with spent time in minutes',
                         action='store_true')
-    parser.add_argument('-e', '--format-email',
-                        help='Format a status report e-mail',
-                        action='store_true')
+    parser.add_argument('--format',
+                        choices=["simple", "pretty", "email"],
+                        default="pretty",
+                        help='Format a status report e-mail'
+                        )
+    parser.add_argument('-e', action='store_const', const='email', dest='format',
+                        help='Use e-mail format')
     parser.add_argument('-f', '--from-date',
                         help='Select the start date of the period to display')
     parser.add_argument('-t', '--to-date',
@@ -198,6 +235,7 @@ def main():
     (week_first, week_last) = get_time()
     if args.from_date:
         week_first = parse_date(args.from_date)
+        week_last = week_first
     if args.to_date:
         week_last = parse_date(args.to_date)
     if week_first > week_last:
@@ -212,8 +250,10 @@ def main():
 
     formatter = None
 
-    if args.format_email:
+    if args.format == "email":
         formatter = EmailFormatter()
+    elif args.format == "simple":
+        formatter = SimpleFormatter(not args.no_time, args.minutes)
     else:
         formatter = PrettyFormatter(not args.no_time, args.minutes)
 
